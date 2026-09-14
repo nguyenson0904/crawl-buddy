@@ -3,6 +3,7 @@ import { AppError } from "./errors";
 import { requireConfig } from "./env";
 import { handleFacebookPost } from "./handlers/facebook";
 import { handleInstagramPost } from "./handlers/instagram";
+import { handleThreadsPost } from "./handlers/threads";
 import type { Env, ExtractSuccess } from "./types";
 
 export function parseExtractInput(body: Record<string, unknown>, maxUrlLength: number): string {
@@ -39,6 +40,12 @@ export async function routeExtract(
         "UNSUPPORTED_INSTAGRAM_URL",
         "Instagram URL must be a public post, reel, or video",
       );
+    case "threads_unsupported":
+      throw new AppError(
+        422,
+        "UNSUPPORTED_THREADS_URL",
+        "Threads URL must be a public post, share link, or thread URL",
+      );
     case "unsupported_platform":
       throw new AppError(422, "UNSUPPORTED_PLATFORM", "No handler registered for this URL");
     case "facebook_post": {
@@ -48,5 +55,7 @@ export async function routeExtract(
     case "instagram_post": {
       return handleInstagramPost(classified.url, classified.shortcode, fetcher);
     }
+    case "threads_post":
+      return handleThreadsPost(classified.url, env, fetcher);
   }
 }

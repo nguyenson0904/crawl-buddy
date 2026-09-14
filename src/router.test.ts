@@ -117,4 +117,31 @@ describe("routeExtract", () => {
       status: 422,
     });
   });
+
+  it("routes threads posts to threads handler", async () => {
+    const fetcher = vi.fn<typeof fetch>(async () => {
+      return new Response(
+        `<!DOCTYPE html><html><head><meta property="og:title" content="Tester (@couple.nix) on Threads"/><meta property="og:description" content="Data post"/></head><body>"username":"couple.nix","like_count":50</body></html>`,
+        { status: 200, headers: { "content-type": "text/html" } },
+      );
+    });
+
+    const result = await routeExtract(
+      "https://www.threads.com/share/BAc4SjRV8c/",
+      env,
+      fetcher,
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.platform).toBe("threads");
+    expect(result.data.author.handle).toBe("couple.nix");
+    expect(result.data.metrics.likes).toBe(50);
+  });
+
+  it("rejects threads profile URLs without post", async () => {
+    await expect(routeExtract("https://www.threads.net/@couple.nix", env)).rejects.toMatchObject({
+      code: "UNSUPPORTED_THREADS_URL",
+      status: 422,
+    });
+  });
 });

@@ -67,8 +67,8 @@ export default {
       }
 
       if (
-        (request.method === "POST" && (path === "/v1/extract" || path === "/")) ||
-        (request.method === "GET" && (path === "/v1/extract" || path === "/extract"))
+        (request.method === "POST" && (path === "/v1/extract" || path === "/" || path === "/v1/threads")) ||
+        (request.method === "GET" && (path === "/v1/extract" || path === "/extract" || path === "/v1/threads"))
       ) {
         return await handleExtract(request, env, id);
       }

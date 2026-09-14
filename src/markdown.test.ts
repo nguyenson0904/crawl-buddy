@@ -4,6 +4,7 @@ import {
   instagramNoteVariables,
   renderFacebookNote,
   renderInstagramNote,
+  renderThreadsNote,
 } from "./markdown";
 import type { CanonicalPost } from "./types";
 
@@ -93,5 +94,54 @@ describe("renderInstagramNote", () => {
       { Metric: "Likes", Count: 658 },
       { Metric: "Comments", Count: 5 },
     ]);
+  });
+});
+
+describe("renderThreadsNote", () => {
+  const threadsPost: CanonicalPost = {
+    id: "3985273256466852750",
+    shortcode: "DdOiOlwkiuO",
+    url: "https://www.threads.net/@couple.nix/post/DdOiOlwkiuO",
+    originalUrl: "https://www.threads.com/share/BAc4SjRV8c/",
+    status: "available",
+    author: {
+      handle: "couple.nix",
+      name: "Tú Nguyễn",
+      id: "65232661690",
+      url: "https://www.threads.net/@couple.nix",
+    },
+    caption: "DATA REAL TRÊN SÀN E-COMMERCE",
+    thumbnailUrl: "https://example.com/thumb.jpg",
+    metrics: { likes: 467, comments: 18, shares: 116, views: null, reposts: 116 },
+    postedAt: "2026-09-13T12:13:35.000Z",
+    scrapedAt: "2026-09-14T04:06:24.375Z",
+    media: [
+      { type: "image", url: "https://example.com/img1.jpg", width: 1000, height: 1000 },
+    ],
+    threadReplies: [
+      {
+        author: { handle: "replyer", name: "Reply User" },
+        text: "Great dataset!",
+        likes: 5,
+        postedAt: "2026-09-13T12:15:00.000Z",
+      },
+    ],
+  };
+
+  it("renders threads knap markdown with media and replies", async () => {
+    const note = await renderThreadsNote(threadsPost);
+
+    expect(note.filename).toBe("couple.nix-DdOiOlwkiuO.md");
+    expect(note.markdown).toContain('platform: "threads"');
+    expect(note.markdown).toContain('id: "3985273256466852750"');
+    expect(note.markdown).toContain("# Tú Nguyễn (@couple.nix)");
+    expect(note.markdown).toContain("DATA REAL TRÊN SÀN E-COMMERCE");
+    expect(note.markdown).toContain("![Media](https://example.com/img1.jpg)");
+    expect(note.markdown).toContain("| Likes | 467 |");
+    expect(note.markdown).toContain("| Comments | 18 |");
+    expect(note.markdown).toContain("## Thread Replies");
+    expect(note.markdown).toContain("> **@replyer**");
+    expect(note.markdown).toContain("> Great dataset!");
+    expect(note.markdown).toContain("[Open post](https://www.threads.net/@couple.nix/post/DdOiOlwkiuO)");
   });
 });
