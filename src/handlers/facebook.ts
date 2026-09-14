@@ -23,5 +23,5 @@ export async function handleFacebookPost(
     throw new AppError(502, "UPSTREAM_EMPTY", "Apify returned no post data");
   }
 
-  return formatFacebookPost(raw, url);
+  return await formatFacebookPost(raw, url);
 }

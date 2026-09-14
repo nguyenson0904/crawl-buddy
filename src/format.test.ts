@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { formatFacebookPost } from "./format";
+import { decodeJsonEscapes, formatFacebookPost } from "./format";
 
 describe("formatFacebookPost", () => {
-  it("maps Apify fields onto the canonical schema", () => {
+  it("maps Apify fields onto the canonical schema", async () => {
     const inputUrl = "https://www.facebook.com/page/posts/pfbid123";
-    const result = formatFacebookPost(
+    const result = await formatFacebookPost(
       {
         url: "https://www.facebook.com/page/posts/pfbid123",
         shortcode: "pfbid123",
@@ -36,5 +36,15 @@ describe("formatFacebookPost", () => {
       views: 0,
     });
     expect(result.data.author.handle).toBe("page");
+    expect(result.filename).toBe("page-1095037716435126.md");
+    expect(result.markdown).toContain("# page");
+    expect(result.markdown).toContain("hello");
+    expect(result.markdown).toContain("| Likes | 913 |");
+  });
+
+  it("decodes JSON unicode escapes in captions", () => {
+    expect(decodeJsonEscapes("Tin m\\u00ecnh \\u0111i \\ud83d\\udc4d 8.7\\/10")).toBe(
+      "Tin mình đi 👍 8.7/10",
+    );
   });
 });

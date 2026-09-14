@@ -1,17 +1,27 @@
+import { renderFacebookNote } from "./markdown";
 import type { CanonicalPost, ExtractSuccess } from "./types";
 
+export function decodeJsonEscapes(value: string): string {
+  return value
+    .replace(/\\u([0-9a-fA-F]{4})/g, (_, hex: string) =>
+      String.fromCharCode(Number.parseInt(hex, 16)),
+    )
+    .replace(/\\\//g, "/");
+}
+
 function asString(value: unknown): string | null {
-  return typeof value === "string" && value.length > 0 ? value : null;
+  if (typeof value !== "string" || value.length === 0) return null;
+  return decodeJsonEscapes(value);
 }
 
 function asNumber(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
-export function formatFacebookPost(
+export async function formatFacebookPost(
   raw: Record<string, unknown>,
   inputUrl: string,
-): ExtractSuccess {
+): Promise<ExtractSuccess> {
   const status = raw.status === "unavailable" ? "unavailable" : "available";
 
   const data: CanonicalPost = {
@@ -38,10 +48,14 @@ export function formatFacebookPost(
     scrapedAt: asString(raw.scrapedAt),
   };
 
+  const note = await renderFacebookNote(data);
+
   return {
     ok: true,
     platform: "facebook",
     input: { type: "url", value: inputUrl },
+    filename: note.filename,
+    markdown: note.markdown,
     data,
   };
 }

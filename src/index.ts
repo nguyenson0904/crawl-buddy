@@ -25,6 +25,7 @@ async function handleExtract(request: Request, env: Env, id: string): Promise<Re
       requestId: id,
       platform: result.platform,
       status: result.data.status,
+      filename: result.filename,
       ms: Date.now() - started,
     });
     return json(result);

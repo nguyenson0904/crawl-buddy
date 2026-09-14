@@ -18,6 +18,8 @@ export interface ExtractSuccess {
   ok: true;
   platform: Platform;
   input: { type: InputType; value: string };
+  filename: string;
+  markdown: string;
   data: CanonicalPost;
 }
 

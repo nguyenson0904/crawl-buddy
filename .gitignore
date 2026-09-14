@@ -7,5 +7,6 @@
 node_modules/
 .wrangler/
 dist/
+output/
 *.tsbuildinfo
 .DS_Store

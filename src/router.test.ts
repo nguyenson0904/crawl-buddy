@@ -41,6 +41,8 @@ describe("routeExtract", () => {
 
     expect(result.ok).toBe(true);
     expect(result.data.metrics.likes).toBe(10);
+    expect(result.filename).toBe("movieinsightvn-1.md");
+    expect(result.markdown).toContain("cap");
     expect(fetcher).toHaveBeenCalledOnce();
     const [calledUrl, init] = fetcher.mock.calls[0] ?? [];
     expect(String(calledUrl)).toContain("clappi~facebook-posts-reels-scraper/run-sync-get-dataset-items");
