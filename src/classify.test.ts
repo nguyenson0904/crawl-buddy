@@ -34,6 +34,42 @@ describe("classify", () => {
     });
   });
 
+  it("detects instagram posts and reels", () => {
+    expect(
+      classify("https://www.instagram.com/p/Dc8DhAQjgAl/?stkn=cGJzdHBuOHQ4OW15"),
+    ).toEqual({
+      kind: "instagram_post",
+      platform: "instagram",
+      url: "https://www.instagram.com/p/Dc8DhAQjgAl/?stkn=cGJzdHBuOHQ4OW15",
+      shortcode: "Dc8DhAQjgAl",
+    });
+
+    expect(classify("https://www.instagram.com/reel/C8j41Q_s0kI/")).toEqual({
+      kind: "instagram_post",
+      platform: "instagram",
+      url: "https://www.instagram.com/reel/C8j41Q_s0kI/",
+      shortcode: "C8j41Q_s0kI",
+    });
+
+    expect(classify("https://www.instagram.com/gitskins/p/Dc8DhAQjgAl/")).toEqual({
+      kind: "instagram_post",
+      platform: "instagram",
+      url: "https://www.instagram.com/gitskins/p/Dc8DhAQjgAl/",
+      shortcode: "Dc8DhAQjgAl",
+    });
+  });
+
+  it("rejects instagram profile or non-post URLs", () => {
+    expect(classify("https://www.instagram.com/gitskins/")).toMatchObject({
+      kind: "instagram_unsupported",
+      platform: "instagram",
+    });
+    expect(classify("https://www.instagram.com/explore/")).toMatchObject({
+      kind: "instagram_unsupported",
+      platform: "instagram",
+    });
+  });
+
   it("detects threads post and share URLs", () => {
     const urls = [
       "https://www.threads.com/share/BAc4SjRV8c/",
@@ -60,7 +96,7 @@ describe("classify", () => {
   });
 
   it("rejects unknown platforms and invalid input", () => {
-    expect(classify("https://www.instagram.com/p/abc/").kind).toBe("unsupported_platform");
+    expect(classify("https://twitter.com/user/status/123").kind).toBe("unsupported_platform");
     expect(classify("not a url")).toEqual({ kind: "invalid", reason: "not_url" });
     expect(classify("   ")).toEqual({ kind: "invalid", reason: "empty" });
   });

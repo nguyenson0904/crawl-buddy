@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { decodeJsonEscapes, formatFacebookPost } from "./format";
+import { decodeJsonEscapes, formatFacebookPost, formatInstagramPost } from "./format";
+import type { CanonicalPost } from "./types";
 
 describe("formatFacebookPost", () => {
   it("maps Apify fields onto the canonical schema", async () => {
@@ -46,5 +47,46 @@ describe("formatFacebookPost", () => {
     expect(decodeJsonEscapes("Tin m\\u00ecnh \\u0111i \\ud83d\\udc4d 8.7\\/10")).toBe(
       "Tin mình đi 👍 8.7/10",
     );
+  });
+});
+
+describe("formatInstagramPost", () => {
+  it("formats canonical post into extract success response", async () => {
+    const canonical: CanonicalPost = {
+      id: "3980071632848683045",
+      shortcode: "Dc8DhAQjgAl",
+      url: "https://www.instagram.com/gitskins/p/Dc8DhAQjgAl/",
+      originalUrl: "https://www.instagram.com/p/Dc8DhAQjgAl/?stkn=cGJzdHBuOHQ4OW15",
+      status: "available",
+      author: {
+        handle: "gitskins",
+        name: "GitSkins",
+        id: "78688855461",
+        url: "https://www.instagram.com/gitskins/",
+      },
+      caption: "5 useful websites every developer should know",
+      thumbnailUrl: "https://example.com/thumb.jpg",
+      metrics: {
+        likes: 658,
+        comments: 5,
+        shares: null,
+        views: null,
+      },
+      postedAt: "2026-09-06T07:58:53.000Z",
+      scrapedAt: "2026-09-14T04:06:24.375Z",
+    };
+
+    const result = await formatInstagramPost(
+      canonical,
+      "https://www.instagram.com/p/Dc8DhAQjgAl/?stkn=cGJzdHBuOHQ4OW15",
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.platform).toBe("instagram");
+    expect(result.filename).toBe("gitskins-3980071632848683045.md");
+    expect(result.markdown).toContain("# GitSkins");
+    expect(result.markdown).toContain("5 useful websites");
+    expect(result.markdown).toContain("| Likes | 658 |");
+    expect(result.markdown).toContain("[Open post](https://www.instagram.com/gitskins/p/Dc8DhAQjgAl/)");
   });
 });

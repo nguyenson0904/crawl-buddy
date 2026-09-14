@@ -32,13 +32,25 @@ describe("worker fetch", () => {
       new Request("https://example.com/v1/extract", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ url: "https://www.instagram.com/p/abc/" }),
+        body: JSON.stringify({ url: "https://twitter.com/user/status/123" }),
       }),
       env,
     );
     expect(res.status).toBe(422);
     await expect(res.json()).resolves.toMatchObject({
       error: { code: "UNSUPPORTED_PLATFORM" },
+    });
+  });
+
+  it("validates GET extract input url", async () => {
+    const res = await worker.fetch(
+      new Request("https://example.com/v1/extract"),
+      env,
+    );
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toMatchObject({
+      ok: false,
+      error: { code: "INVALID_INPUT" },
     });
   });
 

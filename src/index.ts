@@ -14,8 +14,14 @@ function log(fields: Record<string, unknown>): void {
 
 async function handleExtract(request: Request, env: Env, id: string): Promise<Response> {
   const started = Date.now();
-  const body = await readJsonObject(request);
-  const url = parseExtractInput(body, MAX_URL_LENGTH);
+  let url: string;
+  if (request.method === "GET") {
+    const searchParams = new URL(request.url).searchParams;
+    url = parseExtractInput({ url: searchParams.get("url") }, MAX_URL_LENGTH);
+  } else {
+    const body = await readJsonObject(request);
+    url = parseExtractInput(body, MAX_URL_LENGTH);
+  }
 
   try {
     const result = await routeExtract(url, env);
@@ -60,26 +66,10 @@ export default {
         return json({ ok: true });
       }
 
-      if (request.method === "GET" && path === "/v1/threads") {
-        const urlParam = new URL(request.url).searchParams.get("url");
-        if (!urlParam?.trim()) {
-          throw new AppError(400, "INVALID_INPUT", "url query parameter is required");
-        }
-        const started = Date.now();
-        const result = await routeExtract(urlParam.trim(), env);
-        log({
-          level: "info",
-          msg: "extract.ok",
-          requestId: id,
-          platform: result.platform,
-          status: result.data.status,
-          filename: result.filename,
-          ms: Date.now() - started,
-        });
-        return json(result);
-      }
-
-      if (request.method === "POST" && (path === "/v1/extract" || path === "/" || path === "/v1/threads")) {
+      if (
+        (request.method === "POST" && (path === "/v1/extract" || path === "/" || path === "/v1/threads")) ||
+        (request.method === "GET" && (path === "/v1/extract" || path === "/extract" || path === "/v1/threads"))
+      ) {
         return await handleExtract(request, env, id);
       }
 

@@ -1,6 +1,7 @@
 import { createEngine, standardFilters, TemplateRenderError } from "knap";
 import { AppError } from "./errors";
 import { FACEBOOK_NOTE_TEMPLATE } from "./templates/facebook";
+import { INSTAGRAM_NOTE_TEMPLATE } from "./templates/instagram";
 import { THREADS_NOTE_TEMPLATE } from "./templates/threads";
 import type { CanonicalPost } from "./types";
 
@@ -30,6 +31,38 @@ export function facebookNoteVariables(post: CanonicalPost): Record<string, unkno
   return {
     title,
     platform: "facebook",
+    id: post.id,
+    shortcode: post.shortcode,
+    url: post.url,
+    originalUrl: post.originalUrl,
+    status: post.status,
+    authorHandle,
+    authorName,
+    authorId: post.author.id,
+    authorUrl: post.author.url,
+    caption: post.caption,
+    thumbnailUrl: post.thumbnailUrl,
+    postedAt: post.postedAt,
+    scrapedAt: post.scrapedAt,
+    metrics,
+  };
+}
+
+export function instagramNoteVariables(post: CanonicalPost): Record<string, unknown> {
+  const authorHandle = post.author.handle;
+  const authorName = post.author.name;
+  const title = authorName ?? authorHandle ?? firstCaptionLine(post.caption) ?? "Instagram post";
+
+  const metrics = [
+    metricRow("Likes", post.metrics.likes),
+    metricRow("Comments", post.metrics.comments),
+    metricRow("Shares", post.metrics.shares),
+    metricRow("Views", post.metrics.views),
+  ].filter((row) => row !== null);
+
+  return {
+    title,
+    platform: "instagram",
     id: post.id,
     shortcode: post.shortcode,
     url: post.url,
@@ -90,9 +123,9 @@ function metricRow(name: string, count: number | null): { Metric: string; Count:
   return { Metric: name, Count: count };
 }
 
-function noteFilename(post: CanonicalPost): string {
-  const stem = [post.author.handle, post.id ?? post.shortcode].filter(Boolean).join("-") || "facebook-post";
-  return `${stem.replace(/[^\w.-]+/g, "-").replace(/^-+|-+$/g, "") || "facebook-post"}.md`;
+function noteFilename(post: CanonicalPost, fallback = "post"): string {
+  const stem = [post.author.handle, post.id ?? post.shortcode].filter(Boolean).join("-") || fallback;
+  return `${stem.replace(/[^\w.-]+/g, "-").replace(/^-+|-+$/g, "") || fallback}.md`;
 }
 
 function threadsNoteFilename(post: CanonicalPost): string {
@@ -107,7 +140,23 @@ export async function renderFacebookNote(
     const markdown = await engine.renderOrThrow(FACEBOOK_NOTE_TEMPLATE, {
       variables: facebookNoteVariables(post),
     });
-    return { filename: noteFilename(post), markdown };
+    return { filename: noteFilename(post, "facebook-post"), markdown };
+  } catch (err) {
+    if (err instanceof TemplateRenderError) {
+      throw new AppError(500, "MARKDOWN_RENDER_FAILED", "Failed to render markdown note");
+    }
+    throw err;
+  }
+}
+
+export async function renderInstagramNote(
+  post: CanonicalPost,
+): Promise<{ filename: string; markdown: string }> {
+  try {
+    const markdown = await engine.renderOrThrow(INSTAGRAM_NOTE_TEMPLATE, {
+      variables: instagramNoteVariables(post),
+    });
+    return { filename: noteFilename(post, "instagram-post"), markdown };
   } catch (err) {
     if (err instanceof TemplateRenderError) {
       throw new AppError(500, "MARKDOWN_RENDER_FAILED", "Failed to render markdown note");

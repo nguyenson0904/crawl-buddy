@@ -51,11 +51,64 @@ describe("routeExtract", () => {
     });
   });
 
+  it("routes instagram posts and formats the result", async () => {
+    const mockHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta property="og:url" content="https://www.instagram.com/gitskins/p/Dc8DhAQjgAl/" />
+          <meta property="og:title" content="GitSkins on Instagram" />
+          <meta property="og:image" content="https://example.com/thumb.jpg" />
+          <meta name="description" content="658 likes, 5 comments - gitskins on September 6, 2026: &quot;5 useful websites every developer should know&quot;. " />
+          <meta property="instapp:owner_user_id" content="78688855461" />
+        </head>
+        <body>
+          <script>
+            {"require":[[null,null,null,[{"__bbox":{"result":{"data":{"xig_polaris_media":{"pk":"3980071632848683045","code":"Dc8DhAQjgAl","like_count":658,"comment_count":5,"taken_at":1788681533,"display_uri":"https://example.com/thumb.jpg","caption":{"text":"5 useful websites every developer should know"},"user":{"username":"gitskins","full_name":"GitSkins","pk":"78688855461"}}}}}}]]]}
+          </script>
+        </body>
+      </html>
+    `;
+
+    const fetcher = vi.fn<typeof fetch>(async () => {
+      return new Response(mockHtml, {
+        status: 200,
+        headers: { "content-type": "text/html" },
+      });
+    });
+
+    const result = await routeExtract(
+      "https://www.instagram.com/p/Dc8DhAQjgAl/?stkn=cGJzdHBuOHQ4OW15",
+      env,
+      fetcher,
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.platform).toBe("instagram");
+    expect(result.data.metrics.likes).toBe(658);
+    expect(result.data.metrics.comments).toBe(5);
+    expect(result.data.author.handle).toBe("gitskins");
+    expect(result.filename).toBe("gitskins-3980071632848683045.md");
+    expect(result.markdown).toContain("5 useful websites every developer should know");
+    expect(fetcher).toHaveBeenCalledOnce();
+    const [calledUrl, init] = fetcher.mock.calls[0] ?? [];
+    expect(String(calledUrl)).toBe("https://www.instagram.com/p/Dc8DhAQjgAl/");
+    const headers = init?.headers as Record<string, string>;
+    expect(headers["User-Agent"]).toContain("Googlebot");
+  });
+
   it("rejects unsupported platforms", async () => {
-    await expect(routeExtract("https://www.instagram.com/p/abc/", env)).rejects.toMatchObject({
+    await expect(routeExtract("https://twitter.com/status/123", env)).rejects.toMatchObject({
       code: "UNSUPPORTED_PLATFORM",
       status: 422,
     } satisfies Partial<AppError>);
+  });
+
+  it("rejects instagram non-post URLs", async () => {
+    await expect(routeExtract("https://www.instagram.com/gitskins", env)).rejects.toMatchObject({
+      code: "UNSUPPORTED_INSTAGRAM_URL",
+      status: 422,
+    });
   });
 
   it("rejects facebook page URLs", async () => {

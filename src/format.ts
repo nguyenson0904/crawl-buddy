@@ -1,4 +1,4 @@
-import { renderFacebookNote } from "./markdown";
+import { renderFacebookNote, renderInstagramNote } from "./markdown";
 import type { CanonicalPost, ExtractSuccess } from "./types";
 
 export function decodeJsonEscapes(value: string): string {
@@ -57,5 +57,21 @@ export async function formatFacebookPost(
     filename: note.filename,
     markdown: note.markdown,
     data,
+  };
+}
+
+export async function formatInstagramPost(
+  post: CanonicalPost,
+  inputUrl: string,
+): Promise<ExtractSuccess> {
+  const note = await renderInstagramNote(post);
+
+  return {
+    ok: true,
+    platform: "instagram",
+    input: { type: "url", value: inputUrl },
+    filename: note.filename,
+    markdown: note.markdown,
+    data: post,
   };
 }

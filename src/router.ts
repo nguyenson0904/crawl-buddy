@@ -2,6 +2,7 @@ import { classify } from "./classify";
 import { AppError } from "./errors";
 import { requireConfig } from "./env";
 import { handleFacebookPost } from "./handlers/facebook";
+import { handleInstagramPost } from "./handlers/instagram";
 import { handleThreadsPost } from "./handlers/threads";
 import type { Env, ExtractSuccess } from "./types";
 
@@ -33,6 +34,12 @@ export async function routeExtract(
         "UNSUPPORTED_FACEBOOK_URL",
         "Facebook URL must be a public post, reel, video, photo, or share link",
       );
+    case "instagram_unsupported":
+      throw new AppError(
+        422,
+        "UNSUPPORTED_INSTAGRAM_URL",
+        "Instagram URL must be a public post, reel, or video",
+      );
     case "threads_unsupported":
       throw new AppError(
         422,
@@ -44,6 +51,9 @@ export async function routeExtract(
     case "facebook_post": {
       const config = requireConfig(env);
       return handleFacebookPost(classified.url, config, fetcher);
+    }
+    case "instagram_post": {
+      return handleInstagramPost(classified.url, classified.shortcode, fetcher);
     }
     case "threads_post":
       return handleThreadsPost(classified.url, env, fetcher);
