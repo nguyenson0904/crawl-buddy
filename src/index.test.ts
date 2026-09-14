@@ -41,4 +41,29 @@ describe("worker fetch", () => {
       error: { code: "UNSUPPORTED_PLATFORM" },
     });
   });
+
+  it("validates /v1/threads GET input", async () => {
+    const res = await worker.fetch(new Request("https://example.com/v1/threads"), env);
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toMatchObject({
+      ok: false,
+      error: { code: "INVALID_INPUT" },
+    });
+  });
+
+  it("validates /v1/threads POST input", async () => {
+    const res = await worker.fetch(
+      new Request("https://example.com/v1/threads", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({}),
+      }),
+      env,
+    );
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toMatchObject({
+      ok: false,
+      error: { code: "INVALID_INPUT" },
+    });
+  });
 });

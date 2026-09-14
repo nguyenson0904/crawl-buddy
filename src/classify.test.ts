@@ -34,6 +34,31 @@ describe("classify", () => {
     });
   });
 
+  it("detects threads post and share URLs", () => {
+    const urls = [
+      "https://www.threads.com/share/BAc4SjRV8c/",
+      "https://www.threads.net/share/BAc4SjRV8c/",
+      "https://threads.net/share/BAc4SjRV8c/",
+      "https://www.threads.net/@couple.nix/post/DdOiOlwkiuO",
+      "https://www.threads.com/@couple.nix/post/DdOiOlwkiuO",
+      "https://www.threads.net/t/Cxyz123",
+    ];
+    for (const url of urls) {
+      expect(classify(url)).toEqual({
+        kind: "threads_post",
+        platform: "threads",
+        url,
+      });
+    }
+  });
+
+  it("rejects threads profile URLs without a post", () => {
+    expect(classify("https://www.threads.net/@couple.nix")).toMatchObject({
+      kind: "threads_unsupported",
+      platform: "threads",
+    });
+  });
+
   it("rejects unknown platforms and invalid input", () => {
     expect(classify("https://www.instagram.com/p/abc/").kind).toBe("unsupported_platform");
     expect(classify("not a url")).toEqual({ kind: "invalid", reason: "not_url" });

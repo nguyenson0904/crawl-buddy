@@ -1,0 +1,5 @@
+allowBuilds:
+  esbuild: true
+  workerd: true
+minimumReleaseAgeExclude:
+  - knap@0.5.0

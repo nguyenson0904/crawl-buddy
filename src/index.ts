@@ -60,7 +60,26 @@ export default {
         return json({ ok: true });
       }
 
-      if (request.method === "POST" && (path === "/v1/extract" || path === "/")) {
+      if (request.method === "GET" && path === "/v1/threads") {
+        const urlParam = new URL(request.url).searchParams.get("url");
+        if (!urlParam?.trim()) {
+          throw new AppError(400, "INVALID_INPUT", "url query parameter is required");
+        }
+        const started = Date.now();
+        const result = await routeExtract(urlParam.trim(), env);
+        log({
+          level: "info",
+          msg: "extract.ok",
+          requestId: id,
+          platform: result.platform,
+          status: result.data.status,
+          filename: result.filename,
+          ms: Date.now() - started,
+        });
+        return json(result);
+      }
+
+      if (request.method === "POST" && (path === "/v1/extract" || path === "/" || path === "/v1/threads")) {
         return await handleExtract(request, env, id);
       }
 
