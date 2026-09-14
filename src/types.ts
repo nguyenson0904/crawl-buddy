@@ -6,12 +6,14 @@ export interface Env {
 
 export type InputType = "url";
 
-export type Platform = "facebook";
+export type Platform = "facebook" | "instagram";
 
 export type Classification =
   | { kind: "invalid"; reason: "not_url" | "empty" }
   | { kind: "facebook_post"; platform: "facebook"; url: string }
   | { kind: "facebook_unsupported"; platform: "facebook"; url: string }
+  | { kind: "instagram_post"; platform: "instagram"; url: string; shortcode: string }
+  | { kind: "instagram_unsupported"; platform: "instagram"; url: string }
   | { kind: "unsupported_platform"; url: string };
 
 export interface ExtractSuccess {

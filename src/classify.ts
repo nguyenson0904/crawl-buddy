@@ -54,6 +54,34 @@ function isFacebookPostUrl(url: URL): boolean {
   return false;
 }
 
+const INSTAGRAM_HOSTS = new Set([
+  "instagram.com",
+  "www.instagram.com",
+  "m.instagram.com",
+  "instagr.am",
+  "www.instagr.am",
+]);
+
+const INSTAGRAM_POST_SEGMENTS = new Set(["p", "reel", "reels", "tv"]);
+
+function isInstagramHost(host: string): boolean {
+  const h = normalizeHost(host);
+  return INSTAGRAM_HOSTS.has(h) || h.endsWith(".instagram.com") || h.endsWith(".instagr.am");
+}
+
+function extractInstagramShortcode(url: URL): string | null {
+  const parts = url.pathname.split("/").filter(Boolean);
+  for (let i = 0; i < parts.length - 1; i++) {
+    if (INSTAGRAM_POST_SEGMENTS.has(parts[i].toLowerCase())) {
+      const candidate = parts[i + 1];
+      if (candidate && candidate.length > 0) {
+        return candidate;
+      }
+    }
+  }
+  return null;
+}
+
 export function classify(raw: string): Classification {
   const trimmed = raw.trim();
   if (!trimmed) return { kind: "invalid", reason: "empty" };
@@ -74,6 +102,14 @@ export function classify(raw: string): Classification {
       return { kind: "facebook_post", platform: "facebook", url: url.toString() };
     }
     return { kind: "facebook_unsupported", platform: "facebook", url: url.toString() };
+  }
+
+  if (isInstagramHost(url.hostname)) {
+    const shortcode = extractInstagramShortcode(url);
+    if (shortcode) {
+      return { kind: "instagram_post", platform: "instagram", url: url.toString(), shortcode };
+    }
+    return { kind: "instagram_unsupported", platform: "instagram", url: url.toString() };
   }
 
   return { kind: "unsupported_platform", url: url.toString() };

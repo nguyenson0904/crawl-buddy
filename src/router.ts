@@ -2,6 +2,7 @@ import { classify } from "./classify";
 import { AppError } from "./errors";
 import { requireConfig } from "./env";
 import { handleFacebookPost } from "./handlers/facebook";
+import { handleInstagramPost } from "./handlers/instagram";
 import type { Env, ExtractSuccess } from "./types";
 
 export function parseExtractInput(body: Record<string, unknown>, maxUrlLength: number): string {
@@ -32,11 +33,20 @@ export async function routeExtract(
         "UNSUPPORTED_FACEBOOK_URL",
         "Facebook URL must be a public post, reel, video, photo, or share link",
       );
+    case "instagram_unsupported":
+      throw new AppError(
+        422,
+        "UNSUPPORTED_INSTAGRAM_URL",
+        "Instagram URL must be a public post, reel, or video",
+      );
     case "unsupported_platform":
       throw new AppError(422, "UNSUPPORTED_PLATFORM", "No handler registered for this URL");
     case "facebook_post": {
       const config = requireConfig(env);
       return handleFacebookPost(classified.url, config, fetcher);
+    }
+    case "instagram_post": {
+      return handleInstagramPost(classified.url, classified.shortcode, fetcher);
     }
   }
 }

@@ -14,8 +14,14 @@ function log(fields: Record<string, unknown>): void {
 
 async function handleExtract(request: Request, env: Env, id: string): Promise<Response> {
   const started = Date.now();
-  const body = await readJsonObject(request);
-  const url = parseExtractInput(body, MAX_URL_LENGTH);
+  let url: string;
+  if (request.method === "GET") {
+    const searchParams = new URL(request.url).searchParams;
+    url = parseExtractInput({ url: searchParams.get("url") }, MAX_URL_LENGTH);
+  } else {
+    const body = await readJsonObject(request);
+    url = parseExtractInput(body, MAX_URL_LENGTH);
+  }
 
   try {
     const result = await routeExtract(url, env);
@@ -60,7 +66,10 @@ export default {
         return json({ ok: true });
       }
 
-      if (request.method === "POST" && (path === "/v1/extract" || path === "/")) {
+      if (
+        (request.method === "POST" && (path === "/v1/extract" || path === "/")) ||
+        (request.method === "GET" && (path === "/v1/extract" || path === "/extract"))
+      ) {
         return await handleExtract(request, env, id);
       }
 
