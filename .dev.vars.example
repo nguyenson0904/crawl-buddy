@@ -1,0 +1,2 @@
+# Local Wrangler secrets (copy to .dev.vars). Never commit .dev.vars.
+APIFY_TOKEN=
